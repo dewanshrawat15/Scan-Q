@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'qr.dart';
 
 void main() => runApp(MyApp());
 
