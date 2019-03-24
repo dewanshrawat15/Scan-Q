@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:qrcode_reader/qrcode_reader.dart';
 
 void main() {
-  runApp(new MyApp());
+  runApp(QRApp());
 }
 
-class MyApp extends StatelessWidget {
+class QRApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: 'QRCode Reader Demo',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: Colors.black,
+      ),
       home: new MyHomePage(),
     );
   }
@@ -34,9 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: new AppBar(
-        title: const Text('QRCode Reader Example'),
-      ),
       body: new Center(
           child: new FutureBuilder<String>(
               future: _barcodeString,
@@ -44,6 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 return new Text(snapshot.data != null ? snapshot.data : '');
               })),
       floatingActionButton: new FloatingActionButton(
+        backgroundColor: Colors.black87,
         onPressed: () {
           setState(() {
             _barcodeString = new QRCodeReader()

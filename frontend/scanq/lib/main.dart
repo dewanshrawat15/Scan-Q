@@ -1,112 +1,264 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'qr.dart';
 
 void main() => runApp(MyApp());
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+  class AccountInfo{
+    String username;
+    String fullname;
+    String email;
+
+    AccountInfo({this.username, this.fullname, this.email});
+  }
+
+  // Home Screen Starts Here
+
+  class Home extends StatefulWidget {
+
+    final AccountInfo data;
+
+    Home({Key key, @required this.data}) : super(key: key);
+
+    @override
+    HomeState createState() => new HomeState(info: data,);
+  }
+
+  class AccountDet extends StatelessWidget{
+
+    final AccountInfo accountInfo;
+    AccountDet(
+      {Key key, @required this.accountInfo}
     );
+
+
+    @override
+    Widget build(BuildContext context){
+      // return Text("${accountInfo.fullname}");
+      return Scaffold(
+          body: Center(
+            child: Column(
+              // crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Hero(
+                  tag: 'hero',
+                  child: Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: CircleAvatar(
+                      radius: 72.0,
+                      backgroundColor: Colors.black,
+                      child: Text('${accountInfo.fullname[0].toUpperCase()}', style: TextStyle(fontSize: 36, color: Colors.white)),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    '${accountInfo.username}',
+                    style: TextStyle(fontSize: 20.0, color: Colors.black),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    '${accountInfo.fullname}',
+                    style: TextStyle(fontSize: 20.0, color: Colors.black),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    '${accountInfo.email}',
+                    style: TextStyle(fontSize: 16.0, color: Colors.black),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+    }
+    
   }
-}
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  class HomeState extends State<Home> with SingleTickerProviderStateMixin {
+    TabController controller;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+    final AccountInfo info;
+    HomeState({Key key, @required this.info});
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+    @override
+    void initState() {
+      super.initState();
+      controller = new TabController(length: 3, vsync: this);
+    }
 
-  final String title;
+    @override
+    Widget build(BuildContext context) {
+      return new Scaffold(
+        appBar: new AppBar(
+          title: Text('Scan-Q'),
+          backgroundColor: Colors.black87,
+        ),
+        body: new TabBarView(
+          children: <Widget>[
+            AccountDet(accountInfo: info,),
+            QRApp(),
+            new Tab(icon: new Icon(Icons.list)),
+          ],
+          controller: controller,
+        ),
+        bottomNavigationBar: new Material(
+          color: Colors.black87,
+          child: new TabBar(
+            indicatorColor: Colors.white,
+            tabs: <Tab>[
+              new Tab(
+                icon: new Icon(Icons.account_circle, color: Colors.white),
+              ),
+              new Tab(
+                icon: new Icon(Icons.camera_alt, color: Colors.white),
+              ),
+              new Tab(
+                icon: new Icon(Icons.list, color: Colors.white),
+              )
+            ],
+            controller: controller,
+          ),
+        ),
+      );
+    }
+  }
 
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
+  // Home Screen Ends Here
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  class MyApp extends StatelessWidget {
+    @override
+    Widget build(BuildContext context) {
+      return MaterialApp(
+        theme: ThemeData(
+          primaryColor: Colors.black,
+        ),
+        debugShowCheckedModeBanner: false,
+        home: MyCustomForm(),
+      );
+    }
+  }
+
+  class MyCustomForm extends StatefulWidget {
+    @override
+    _MyCustomFormState createState() => _MyCustomFormState();
+  }
+
+  class _MyCustomFormState extends State<MyCustomForm> {
+    final myUsername = TextEditingController();
+    final myPassword = TextEditingController();
+    @override
+    void dispose() {
+      myUsername.dispose();
+      myPassword.dispose();
+      super.dispose();
+    }
+
+    void _showDialog() {
+      // flutter defined function
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          // return object of type Dialog
+          return AlertDialog(
+            title: new Text("Wrong Credentials"),
+            content: new Text("Wrong credentials entered. Try Again! "),
+            actions: <Widget>[
+              // usually buttons at the bottom of the dialog
+              new FlatButton(
+                child: new Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+  Future<String> apiRequest(String url, Map jsonMap) async{
+    var temp = json.encode(jsonMap);
+    http.post(url, body: temp)
+      .then((response){
+        var t = response.body;
+        var jsonResult = json.decode(t.toString());
+        var result = jsonResult["boolean"];
+        if(result == true){
+          myUsername.clear();
+          myPassword.clear();
+          var jsonusername = jsonResult["username"];
+          var jsonname = jsonResult["name"];
+          var jsonemail = jsonResult["email"];
+          final data = AccountInfo(username: jsonusername, fullname: jsonname, email: jsonemail);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Home(data: data,)),
+          );
+        }
+        else{
+          _showDialog();
+        }
+      });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.symmetric(horizontal: 24.0),
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+            SizedBox(height: 80.0),
+            Column(
+              children: <Widget>[
+                SizedBox(height: 20.0),
+                Text('Login', style: TextStyle(fontSize: 24.0),),
+              ],
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
+            SizedBox(height: 120.0),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Username',
+              ),
+              controller: myUsername,
+            ),
+            SizedBox(height: 12.0),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Password',
+              ),
+              controller: myPassword,
+              obscureText: true,
+            ),
+            ButtonBar(
+              children: <Widget>[
+                RaisedButton(
+                  child: Text('Login'),
+                  onPressed: () {
+                    String url = 'http://127.0.0.1:8000/api/login/';
+                    Map map = {
+                      'username': myUsername.text,
+                      'password': myPassword.text
+                    };
+                    apiRequest(url, map);
+                  },
+                ),
+              ],
             ),
           ],
-        ),
+        )
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
