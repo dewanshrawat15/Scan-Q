@@ -5,16 +5,56 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import UserChangeForm, PasswordChangeForm
 from .forms import UserRegisterForm, EditProfile
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 import json
+import hashlib
 from django.http import HttpResponse, JsonResponse
-# from .models import User_Self
-# Create your views here.
+from .models import extended_user, teacher_user
+from .forms import ExtendedUserForm, TeacherUserForm
 
 def home(request):
 	return render(request, 'sec/home.html', {})
 
 def faq(request):
 	return render(request, 'sec/faq.html', {})
+
+def capture(request, key):
+	print(key)
+
+@login_required
+def teacher(request):
+	y = request.user.pk
+	temp = extended_user.objects.get(user_code=y)
+	if temp.teacher == True:
+		if request.method == 'POST':
+			form_temp = TeacherUserForm(request.POST)
+			if form_temp.is_valid:
+				form = form_temp.save(commit=False)
+				sub_name = form_temp.cleaned_data.get('subject_name')
+				cl_name = form_temp.cleaned_data.get('class_name')
+				count = form_temp.cleaned_data.get('count')
+				code = y
+				comp_str = cl_name + sub_name + str(code)
+				comp_str = comp_str.lower()
+				stripped_string = ''.join(e for e in comp_str if e.isalnum())
+				key = hashlib.sha256(stripped_string.encode())
+				key = key.hexdigest()
+				try:
+					record = teacher_user.objects.get(sha_digest=key)
+				except teacher_user.DoesNotExist:
+					record = False
+				if not record:
+					teacher_user.objects.create(class_name=cl_name, subject_name=sub_name, teacher_code=code, sha_digest=key, count=count)
+				else:
+					record.lectures = record.lectures + 1
+					record.count = count
+					record.save()
+				return redirect('capture', key=key)
+		else:
+			form_temp = TeacherUserForm()
+		return render(request, 'sec/gen.html', {'form': form_temp})
+	else:
+		return HttpResponse('<h1>Access Denied</h1>')
 
 @login_required
 def profile(request):
@@ -68,12 +108,18 @@ def register(request):
 	args = {}
 	if request.method == 'POST':
 		form = UserRegisterForm(request.POST)
-		if form.is_valid():
+		ex_form = ExtendedUserForm(request.POST)
+		if form.is_valid() and ex_form.is_valid():
 			form.save(request)
 			username = form.cleaned_data.get('username')
+			typ = ex_form.cleaned_data.get('teacher')
+			print(typ)
+			temp = User.objects.get(username=username)
+			extended_user.objects.create(user_code=temp.pk, teacher=typ)
 			messages.success(request, f'Account created for { username }!')
 			return redirect('profile')
 	else:
 		form = UserRegisterForm()
+		ex_form = ExtendedUserForm()
 	args['form'] = form
-	return render(request, 'sec/register.html', {'form': form}, args)
+	return render(request, 'sec/register.html', {'form': form, 'ex_form': ex_form}, args)

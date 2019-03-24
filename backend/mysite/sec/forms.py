@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib.auth.models import User
-
+from .models import extended_user, teacher_user
 class UserRegisterForm(UserCreationForm):
 	email = forms.EmailField()
 	first_name = forms.CharField(max_length=30)
@@ -32,3 +32,18 @@ class EditProfile(UserChangeForm):
 	class Meta:
 		model = User
 		fields = {'first_name', 'last_name', 'email'}
+
+class ExtendedUserForm(forms.ModelForm):
+
+	class Meta:
+		model = extended_user
+		fields = ('teacher',)
+		labels = {
+			'teacher': 'Tick if you are a teacher '
+		}
+
+class TeacherUserForm(forms.ModelForm):
+
+	class Meta:
+		model = teacher_user
+		fields = { 'class_name', 'subject_name', 'count', }		
