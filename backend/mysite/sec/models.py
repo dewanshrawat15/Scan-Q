@@ -1,4 +1,5 @@
 from django.db import models
+# from django.db.utils import timezone
 
 class extended_user(models.Model):
 	user_code = models.CharField(max_length=6, null=True)
@@ -23,6 +24,7 @@ class student_list(models.Model):
 	subject = models.CharField(max_length=64, null=True)
 	attendance = models.PositiveIntegerField(default=1 ,null=True)
 	digest = models.CharField(max_length=100, null=True)
+	att_date = models.PositiveIntegerField(null=True)
 
 	def __str__(self):
 		return self.digest

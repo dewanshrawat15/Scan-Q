@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:barcode_scan/barcode_scan.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'qr.dart';
 
 void main() => runApp(MyApp());
 
@@ -14,6 +15,82 @@ void main() => runApp(MyApp());
 
     AccountInfo({this.username, this.fullname, this.email});
   }
+
+
+  // QR App Screen Here
+
+  class QRApp extends StatefulWidget {
+    final AccountInfo accountUsername;
+    QRApp({Key key, @required this.accountUsername});
+
+    @override
+    QRAppState createState() {
+      return new QRAppState(qrappdata: accountUsername);
+    }
+  }
+
+  class QRAppState extends State<QRApp> {
+    final AccountInfo qrappdata;
+    QRAppState({Key key, @required this.qrappdata});
+
+    String result = "";
+
+    Future _scanQR() async {
+      try {
+        String qrResult = await BarcodeScanner.scan();
+        Map data = {
+          'username': '${qrappdata.username}'
+        };
+        var jsonData = json.encode(data);
+        http.post(qrResult, body: jsonData)
+          .then((response){
+            var t = response.body;
+            setState((){
+              result = t;
+            });
+          });
+      } on PlatformException catch (ex) {
+        if (ex.code == BarcodeScanner.CameraAccessDenied) {
+          setState(() {
+            result = "Camera permission was denied";
+          });
+        } else {
+          setState(() {
+            result = "Unknown Error $ex";
+          });
+        }
+      } on FormatException {
+        setState(() {
+          result = "You pressed the back button before scanning anything";
+        });
+      } catch (ex) {
+        setState(() {
+          result = "Unknown Error $ex";
+        });
+      }
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            result,
+            style: new TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          icon: Icon(Icons.camera_alt),
+          label: Text("Scan"),
+          onPressed: _scanQR,
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      );
+    }
+  }
+
+  // QR Code Scanner Ends Here
+
 
   // Home Screen Starts Here
 
@@ -106,7 +183,7 @@ void main() => runApp(MyApp());
         body: new TabBarView(
           children: <Widget>[
             AccountDet(accountInfo: info,),
-            QRApp(),
+            QRApp(accountUsername: info,),
             new Tab(icon: new Icon(Icons.list)),
           ],
           controller: controller,
@@ -187,7 +264,7 @@ void main() => runApp(MyApp());
       );
     }
 
-  Future<String> apiRequest(String url, Map jsonMap) async{
+  apiRequest(String url, Map jsonMap) async{
     var temp = json.encode(jsonMap);
     http.post(url, body: temp)
       .then((response){
@@ -246,7 +323,7 @@ void main() => runApp(MyApp());
                 RaisedButton(
                   child: Text('Login'),
                   onPressed: () {
-                    String url = 'http://127.0.0.1:8000/api/login/';
+                    String url = 'http://scanq.herokuapp.com/api/login/';
                     Map map = {
                       'username': myUsername.text,
                       'password': myPassword.text

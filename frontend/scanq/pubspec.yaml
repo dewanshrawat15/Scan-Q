@@ -9,7 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  qrcode_reader:
+  path_provider: 0.4.1
+  barcode_scan: ^0.0.4
+  qr_flutter: ^1.1.1
   http:
   cupertino_icons: ^0.1.2
 

@@ -7,6 +7,7 @@ from .forms import UserRegisterForm, EditProfile
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 import json
+import datetime
 import hashlib
 from django.http import HttpResponse, JsonResponse
 from .models import extended_user, teacher_user, student_list
@@ -24,19 +25,32 @@ def capture(request, key):
 		temp_username = stu_data.get('username', None)
 		dummy_user = User.objects.get(username=temp_username)
 		stu_code = dummy_user.pk
-		corr_teacher = teacher_user.objects.get(sha_digest=key)
+		corr_teacher = teacher_user.objects.get(sha_digest=key)		
+		curr_date = str(datetime.datetime.now().date())
+		stripped_date = ''.join(e for e in curr_date if e.isalnum())
 		sub_name = corr_teacher.subject_name
 		try:
-			record = student_list.objects.get(digest=key)
+			record = student_list.objects.get(digest=key, student_code=stu_code)
 		except student_list.DoesNotExist:
 			record = False
 		if not record:
-			student_list.objects.create(student_code=stu_code, digest=key, subject=sub_name)
+			student_list.objects.create(student_code=stu_code, digest=key, subject=sub_name, att_date=stripped_date)
 		else:
 			record.attendance = record.attendance + 1
+			record.att_date = stripped_date
 			record.save()
 		corr_teacher.count = corr_teacher.count - 1
 		corr_teacher.save()
+		li_att_stu = student_list.objects.filter(digest=key, att_date=stripped_date)
+		li_att_name = []
+		for i in li_att_stu:
+			code = i.student_code
+			corr_user = User.objects.get(pk=code)
+			name = corr_user.get_full_name()
+			li_att_name.append(name)
+		li_att_name = list(li_att_name)
+		data = JsonResponse(li_att_name, safe=False)
+		print(li_att_name)
 		return HttpResponse('<h1>Attendance Recorded</h1>')
 	else:
 		return HttpResponse('<h1>Hey kid, Go back, you cannot hack</h1>')
