@@ -46,7 +46,7 @@ void main() => runApp(MyApp());
           .then((response){
             var t = response.body;
             setState((){
-              result = t;
+               tickDisplay();
             });
           });
       } on PlatformException catch (ex) {
@@ -336,6 +336,24 @@ void main() => runApp(MyApp());
           ],
         )
       ),
+    );
+  }
+}
+
+
+// ignore: camel_case_types
+class tickDisplay extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        primaryColor: Colors.black,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: new Image(image: new AssetImage("assets/tick.gif"))
+      ),
+
     );
   }
 }
