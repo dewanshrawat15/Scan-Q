@@ -21,8 +21,8 @@ class teacher_user(models.Model):
 class student_list(models.Model):
 	student_code = models.PositiveIntegerField(null=True)
 	subject = models.CharField(max_length=64, null=True)
-	attendance = models.PositiveIntegerField(null=True)
+	attendance = models.PositiveIntegerField(default=1 ,null=True)
 	digest = models.CharField(max_length=100, null=True)
 
 	def __str__(self):
-		return self.student_code
+		return self.digest

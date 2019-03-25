@@ -27,6 +27,7 @@ urlpatterns = [
 	path('api/login/', sec_view.login_api, name='login_api'),
 	path('faq/', sec_view.faq, name='faq'),
 	path('teacher/', sec_view.teacher, name='teacher'),
+	path('qr/<str:key>/display/', sec_view.qr, name='qr'),
 	path('capture/<str:key>/attend', sec_view.capture, name='capture'),
 	path('profile/edit/', sec_view.edit, name='edit'),
 	path('login/', auth_views.LoginView.as_view(template_name='sec/login.html'), name='login'),

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 import json
 import hashlib
 from django.http import HttpResponse, JsonResponse
-from .models import extended_user, teacher_user
+from .models import extended_user, teacher_user, student_list
 from .forms import ExtendedUserForm, TeacherUserForm
 
 def home(request):
@@ -19,7 +19,39 @@ def faq(request):
 	return render(request, 'sec/faq.html', {})
 
 def capture(request, key):
-	print(key)
+	if request.method == 'POST':
+		stu_data = json.loads(request.body)
+		temp_username = stu_data.get('username', None)
+		dummy_user = User.objects.get(username=temp_username)
+		stu_code = dummy_user.pk
+		corr_teacher = teacher_user.objects.get(sha_digest=key)
+		sub_name = corr_teacher.subject_name
+		try:
+			record = student_list.objects.get(digest=key)
+		except student_list.DoesNotExist:
+			record = False
+		if not record:
+			student_list.objects.create(student_code=stu_code, digest=key, subject=sub_name)
+		else:
+			record.attendance = record.attendance + 1
+			record.save()
+		corr_teacher.count = corr_teacher.count - 1
+		corr_teacher.save()
+		return HttpResponse('<h1>Attendance Recorded</h1>')
+	else:
+		return HttpResponse('<h1>Hey kid, Go back, you cannot hack</h1>')
+
+@login_required
+def qr(request, key):
+	y = request.user.pk
+	temp = extended_user.objects.get(user_code=y)
+	if temp.teacher == True:
+		base = 'http://127.0.0.1:8000/capture/'
+		url = base + key + '/attend'
+		url = str(url)
+		return render(request, 'sec/display.html', {'lecture_url': url})
+	else:
+		return HttpResponse('<h1>How long are you gonna try kid?</h1>')
 
 @login_required
 def teacher(request):
@@ -49,7 +81,7 @@ def teacher(request):
 					record.lectures = record.lectures + 1
 					record.count = count
 					record.save()
-				return redirect('capture', key=key)
+				return redirect('qr', key=key)
 		else:
 			form_temp = TeacherUserForm()
 		return render(request, 'sec/gen.html', {'form': form_temp})

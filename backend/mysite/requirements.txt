@@ -1,0 +1,7 @@
+colorama==0.4.1
+Django==2.1.7
+django-crispy-forms==1.7.2
+django-qr-code==1.0.0
+pytz==2018.9
+qrcode==6.1
+six==1.12.0

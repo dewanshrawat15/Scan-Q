@@ -1,0 +1,7 @@
+{% extends 'sec/base.html' %}
+{% block content %}
+{% load qr_code %}
+	<center>
+		{% qr_from_text lecture_url size="M" %}
+	</center>
+{% endblock %}
