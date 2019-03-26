@@ -41,19 +41,24 @@ def capture(request, key):
 			record.save()
 		corr_teacher.count = corr_teacher.count - 1
 		corr_teacher.save()
-		li_att_stu = student_list.objects.filter(digest=key, att_date=stripped_date)
-		li_att_name = []
-		for i in li_att_stu:
-			code = i.student_code
-			corr_user = User.objects.get(pk=code)
-			name = corr_user.get_full_name()
-			li_att_name.append(name)
-		li_att_name = list(li_att_name)
-		data = JsonResponse(li_att_name, safe=False)
-		print(li_att_name)
-		return HttpResponse('<h1>Attendance Recorded</h1>')
+		return redirect('list_students', key=key)
 	else:
 		return HttpResponse('<h1>Hey kid, Go back, you cannot hack</h1>')
+
+def ret_list(request, key):
+	curr_date = str(datetime.datetime.now().date())
+	stripped_date = ''.join(e for e in curr_date if e.isalnum())
+	li_att_stu = student_list.objects.filter(digest=key, att_date=stripped_date)
+	li_att_name = []
+	for i in li_att_stu:
+		code = i.student_code
+		corr_user = User.objects.get(pk=code)
+		temp_name = corr_user.get_full_name()
+		temp_data = {"name": temp_name}
+		li_att_name.append(temp_data)
+	print(li_att_name)
+	data = JsonResponse(list(li_att_name), safe=False)
+	return HttpResponse(data)
 
 @login_required
 def qr(request, key):
