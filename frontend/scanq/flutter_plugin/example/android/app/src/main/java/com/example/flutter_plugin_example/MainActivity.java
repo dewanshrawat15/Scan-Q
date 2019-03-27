@@ -1,4 +1,4 @@
-package com.example.scanq;
+package com.example.flutter_plugin_example;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
